@@ -26,6 +26,7 @@ public interface UserService extends Service {
                 pathCall("/api/user", this::createUser),
                 pathCall("/api/user/:id", this::getUser),
                 pathCall("/api/user", this::getUsers)
-        ).withPathParamSerializer(UUID.class, PathParamSerializers.required("UUID", UUID::fromString, UUID::toString));
+        ).withAutoAcl(true)
+         .withPathParamSerializer(UUID.class, PathParamSerializers.required("UUID", UUID::fromString, UUID::toString));
     }
 }
