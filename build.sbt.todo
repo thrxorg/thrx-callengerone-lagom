@@ -1,1 +1,7 @@
 
+  
+  //Communicating with external services
+  // http://www.lagomframework.com/documentation/1.3.x/java/ServiceLocator.html
+  //The first thing you will have to do is to register each external service in the Service Locator. 
+  // Assume we want to register an external service named "weather" that is running on "http://localhost:3333", here is what we would add to the build.
+  lagomUnmanagedServices in ThisBuild := Map("weather" -> "http://localhost:3333")
