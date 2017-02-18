@@ -1,0 +1,21 @@
+lazy val cOneLagomJavaStreamApi = (project in file("c-one-stream-api"))
+  .settings(common: _*)
+  .settings(eclipseSettingsJava: _*)
+  .settings(eclipseSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      lagomJavadslApi
+    )
+  )
+
+lazy val cOneLagomJavaStreamImpl = (project in file("c-one-stream-impl"))
+  .enablePlugins(LagomJava)
+  .settings(common: _*)
+  .settings(eclipseSettingsJava: _*)
+  .settings(eclipseSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      lagomJavadslTestKit
+    )
+  )
+  .dependsOn(cOneLagomJavaStreamApi, cOneLagomJavaUserApi)
