@@ -7,8 +7,6 @@ scalaVersion in ThisBuild := "2.11.8"
 lazy val cOneLagomJavaProject = (project in file("."))
   .aggregate(cOneLagomJavaUserApi
   			, cOneLagomJavaUserImpl
-//  			, cOneLagomJavaStreamApi
-//  			, cOneLagomJavaStreamImpl
   			)
   .settings(eclipseSettingsParent: _*)
 
