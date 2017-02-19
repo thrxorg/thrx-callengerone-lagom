@@ -1,0 +1,24 @@
+language: scala
+sudo: false
+jdk:
+  - oraclejdk8
+script:
+  - sbt +test
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+before_cache:
+  # Ensure changes to the cache aren't persisted
+  - rm -rf $HOME/.ivy2/cache/org.example
+  - rm -rf $HOME/.ivy2/cache/com.example
+  - rm -rf $HOME/.ivy2/cache/de.thrx
+  - rm -rf $HOME/.ivy2/cache/org.thrx
+  # Delete all ivydata files since ivy touches them on each build
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" | xargs rm
+#notifications:
+notifications:
+  webhooks:
+    urls:
+        - https://webhooks.gitter.im/e/a31ac48b023f920fc9b5
+    on_success: always
+    on_failure: always  
