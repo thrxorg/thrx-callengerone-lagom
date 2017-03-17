@@ -1,50 +1,59 @@
 package org.thrx.challenger.one.user.impl;
 
+import java.util.UUID;
+
 import org.thrx.challenger.one.user.api.User;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.lightbend.lagom.javadsl.persistence.AggregateEvent;
+import com.lightbend.lagom.javadsl.persistence.AggregateEventShards;
 import com.lightbend.lagom.javadsl.persistence.AggregateEventTag;
+import com.lightbend.lagom.javadsl.persistence.AggregateEventTagger;
+import com.lightbend.lagom.serialization.CompressedJsonable;
 import com.lightbend.lagom.serialization.Jsonable;
 
-public interface UserEvent extends Jsonable, AggregateEvent<UserEvent> {
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Value;
 
-    final class UserCreated implements UserEvent {
-        private final User user;
+public interface UserEvent extends Jsonable, AggregateEvent<UserEvent>, CompressedJsonable {
 
-        public UserCreated(User user) {
-            this.user = user;
-        }
+    int NUM_SHARDS = 4;
+    AggregateEventShards<UserEvent> TAG = AggregateEventTag.sharded(UserEvent.class, NUM_SHARDS);
 
-        public User getUser() {
-            return user;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            UserCreated that = (UserCreated) o;
-
-            return user.equals(that.user);
-
-        }
-
-        @Override
-        public int hashCode() {
-            return user.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "UserCreated{" +
-                    "user=" + user +
-                    '}';
-        }
-    }
+    UUID getUserId();
+    User getUser();
 
     @Override
-    default AggregateEventTag<UserEvent> aggregateTag() {
-        return AggregateEventTag.of(UserEvent.class);
+    default AggregateEventTagger<UserEvent> aggregateTag() {
+        return TAG;
     }
+
+    @Value
+    @Builder
+    @JsonDeserialize
+    @AllArgsConstructor
+    final class UserCreated implements UserEvent {
+        private final User user;
+        private final UUID userId;
+    }
+	
+    @Value
+    @Builder
+    @JsonDeserialize
+    @AllArgsConstructor
+    final class UserUpdated implements UserEvent {
+    	private final User user;
+    	private final UUID userId;
+    }
+    
+    @Value
+    @Builder
+    @JsonDeserialize
+    @AllArgsConstructor
+    final class UserDeleted implements UserEvent {
+    	private final User user;
+    	private final UUID userId;
+    }
+    
 }

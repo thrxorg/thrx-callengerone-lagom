@@ -9,5 +9,7 @@ public class UserModule extends AbstractModule implements ServiceGuiceSupport {
     @Override
     protected void configure() {
         bindServices(serviceBinding(UserService.class, UserServiceImpl.class));
+//        bindClient(FriendService.class);
+        bind(UserRepository.class);
     }
 }

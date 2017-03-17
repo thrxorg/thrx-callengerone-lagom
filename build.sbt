@@ -16,9 +16,11 @@ lazy val cOneLagomJavaUserApi = (project in file("c-one-user-api"))
   .settings(eclipseSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
-      lagomJavadslApi
+      lagomJavadslApi,
+      lombok
     )
-  )
+  ).dependsOn(cOneLagomJavaSecurity)
+  
 
 lazy val cOneLagomJavaUserImpl = (project in file("c-one-user-impl"))
   .enablePlugins(LagomJava)
@@ -28,15 +30,42 @@ lazy val cOneLagomJavaUserImpl = (project in file("c-one-user-impl"))
   .settings(
     libraryDependencies ++= Seq(
       lagomJavadslPersistenceCassandra,
+      "com.datastax.cassandra" % "cassandra-driver-extras" % "3.0.0",
       lagomJavadslTestKit
     )
   )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(cOneLagomJavaUserApi)
+  .dependsOn(cOneLagomJavaCommon)
+
+lazy val cOneLagomJavaSecurity = (project in file("c-one-security"))
+  .settings(common: _*)
+  .settings(eclipseSettingsJava: _*)
+  .settings(eclipseSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      lagomJavadslApi,
+      lagomJavadslServer % Optional
+    )
+  )
+
+lazy val cOneLagomJavaCommon = (project in file("c-one-common"))
+  .settings(common: _*)
+  .settings(eclipseSettingsJava: _*)
+  .settings(eclipseSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      lagomJavadslApi,
+      lombok
+    )
+  )
+
+val lombok = "org.projectlombok" % "lombok" % "1.16.10"
 
 
 def common = Seq(
-  javacOptions in compile += "-parameters"
+//  javacOptions in compile += "-parameters"
+  javacOptions ++= Seq("-encoding", "UTF-8", "-source", "1.8", "-target", "1.8", "-Xlint:unchecked", "-Xlint:deprecation", "-parameters")
 )
 
 
@@ -68,7 +97,7 @@ lazy val eclipseSettingsJava = Seq(
   unmanagedSourceDirectories in Test := Seq((javaSource in Test).value)
 )
 
-// Eclipse for java projects
+// Eclipse general settings
 lazy val eclipseSettings = Seq(
   EclipseKeys.eclipseOutput := Some(".target"),
   // will automatically download and attach sources if available

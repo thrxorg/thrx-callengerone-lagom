@@ -11,6 +11,8 @@ import org.thrx.challenger.one.user.impl.UserEvent.UserCreated;
 
 import com.lightbend.lagom.javadsl.persistence.PersistentEntity;
 
+import akka.Done;
+
 public class UserEntity extends PersistentEntity<UserCommand, UserEvent, Optional<User>> {
 
     @Override
@@ -28,7 +30,7 @@ public class UserEntity extends PersistentEntity<UserCommand, UserEvent, Optiona
         BehaviorBuilder b = newBehaviorBuilder(Optional.of(user));
 
         b.setReadOnlyCommandHandler(GetUser.class, (get, ctx) ->
-                ctx.reply(state())
+                ctx.reply(Optional.of(user))
         );
 
         b.setReadOnlyCommandHandler(CreateUser.class, (create, ctx) ->
@@ -39,15 +41,15 @@ public class UserEntity extends PersistentEntity<UserCommand, UserEvent, Optiona
     }
 
     private Behavior notCreated() {
-        BehaviorBuilder b = newBehaviorBuilder(Optional.empty());
+        BehaviorBuilder b = newBehaviorBuilder(Optional.empty()); 
 
         b.setReadOnlyCommandHandler(GetUser.class, (get, ctx) ->
-                ctx.reply(state())
+                ctx.reply(Optional.empty())
         );
 
         b.setCommandHandler(CreateUser.class, (create, ctx) -> {
-            User user = new User(UUID.fromString(entityId()), create.getName());
-            return ctx.thenPersist(new UserCreated(user), (e) -> ctx.reply(user));
+            User user = create.getUser();
+            return ctx.thenPersist(new UserCreated(user,user.getId()), (e) -> ctx.reply(Done.getInstance()));
         });
 
         b.setEventHandlerChangingBehavior(UserCreated.class, user -> created(user.getUser()));

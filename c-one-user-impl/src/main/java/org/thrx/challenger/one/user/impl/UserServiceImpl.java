@@ -1,12 +1,12 @@
 package org.thrx.challenger.one.user.impl;
 
-import java.util.Optional;
+import static de.thrx.cone.security.ServerSecurity.authenticated;
+
 import java.util.UUID;
 
 import javax.inject.Inject;
 
 import org.pcollections.PSequence;
-import org.pcollections.TreePVector;
 import org.thrx.challenger.one.user.api.User;
 import org.thrx.challenger.one.user.api.UserService;
 
@@ -15,67 +15,84 @@ import com.lightbend.lagom.javadsl.api.transport.NotFound;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntityRef;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntityRegistry;
 
+import akka.Done;
 import akka.NotUsed;
-import akka.actor.ActorSystem;
-import akka.persistence.cassandra.query.javadsl.CassandraReadJournal;
-import akka.persistence.query.PersistenceQuery;
-import akka.persistence.query.javadsl.CurrentPersistenceIdsQuery;
-import akka.stream.Materializer;
-import akka.stream.javadsl.Sink;
 
 public class UserServiceImpl implements UserService {
 
-    private final PersistentEntityRegistry registry;
-    private final CurrentPersistenceIdsQuery currentIdsQuery;
-    private final Materializer mat;
+	private final PersistentEntityRegistry registry;
+//	private final CurrentPersistenceIdsQuery currentIdsQuery;
+//	private final Materializer mat;
+	private final UserRepository userRepository;
 
-    @Inject
-    public UserServiceImpl(PersistentEntityRegistry registry, ActorSystem system, Materializer mat) {
-        this.registry = registry;
-        this.mat = mat;
-        this.currentIdsQuery =
-                PersistenceQuery.get(system).getReadJournalFor(CassandraReadJournal.class, CassandraReadJournal.Identifier());
+	@Inject
+	public UserServiceImpl(PersistentEntityRegistry registry, UserRepository userRepository) {
+//		public UserServiceImpl(PersistentEntityRegistry registry, ActorSystem system, Materializer mat) {
+		this.registry = registry;
+		this.userRepository = userRepository;
+//		this.mat = mat;
+//		this.currentIdsQuery = PersistenceQuery.get(system).getReadJournalFor(CassandraReadJournal.class, CassandraReadJournal.Identifier());
+		registry.register(UserEntity.class);
+	}
 
-        registry.register(UserEntity.class);
-    }
+	@Override
+	public ServiceCall<User, Done> createUser() {
+		return authenticated(userId -> reqUser -> {
+			UUID uuid = UUID.randomUUID();
+			return entityRef(uuid).ask(UserCommand.CreateUser.builder().user(reqUser).build());
+		});
+	}
 
-    @Override
-    public ServiceCall<User, User> createUser() {
-        return user -> {
-            UUID uuid = UUID.randomUUID();
-            return entityRef(uuid).ask(new UserCommand.CreateUser(user.getName()));
-        };
-    }
+	@Override
+	public ServiceCall<NotUsed, User> getUser(UUID userId) {
+		return req -> {
+			return entityRef(userId).ask(UserCommand.GetUser.builder().build())
+					.thenApply(maybeUser -> maybeUser.orElseGet(() -> {
+						throw new NotFound("User " + userId + " not found");
+					}));
+		};
+	}
 
-    @Override
-    public ServiceCall<NotUsed, User> getUser(UUID userId) {
-        return req -> {
-            return entityRef(userId).ask(UserCommand.GetUser.INSTANCE)
-                    .thenApply(maybeUser ->
-                            maybeUser.orElseGet(() -> {
-                                throw new NotFound("User " + userId + " not found");
-                            })
-            );
-        };
-    }
+	 @Override
+	 public ServiceCall<NotUsed, PSequence<User>> getUsers() {
+		 return req -> {
+			 userRepository.hashCode();
+			 return null;
+		 };
+		 
+	 }
 
-    @Override
-    public ServiceCall<NotUsed, PSequence<User>> getUsers() {
-        // Note this should never make production....
-        return req -> currentIdsQuery.currentPersistenceIds()
-                .filter(id -> id.startsWith("UserEntity"))
-                .mapAsync(4, id -> entityRef(id.substring(10)).ask(UserCommand.GetUser.INSTANCE))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .runWith(Sink.seq(), mat)
-                .thenApply(TreePVector::from);
-    }
+//	    @Override
+//	    public ServiceCall<NotUsed, PaginatedSequence<ItemSummary>> getItemsForUser(
+//	            UUID id, ItemStatus status, Optional<Integer> pageNo, Optional<Integer> pageSize) {
+//	        return req -> items.getItemsForUser(id, status, pageNo.orElse(0), pageSize.orElse(DEFAULT_PAGE_SIZE));
+//	    }
+	 
+	 
+	@Override
+	public ServiceCall<User, Done> updateUser() {
+		return authenticated(userId -> reqUser -> {
+			return entityRef(reqUser.getId()).ask(UserCommand.UpdateUser.builder().user(reqUser).build());
+		});
+	}
 
-    private PersistentEntityRef<UserCommand> entityRef(UUID id) {
-        return entityRef(id.toString());
-    }
+	@Override
+	public ServiceCall<NotUsed, Done> deleteUser(UUID userId) {
+		return req -> {
+			// return
+			// entityRef(userId).ask(UserCommand.DeleteUser.builder().build());
+			// TODO alternativ test .... funktioniert das oben auch ???:
+			User user = User.builder().id(userId).build();
+			return entityRef(userId).ask(UserCommand.DeleteUser.builder().user(user).build());
+		};
+	}
 
-    private PersistentEntityRef<UserCommand> entityRef(String id) {
-        return registry.refFor(UserEntity.class, id);
-    }
+	private PersistentEntityRef<UserCommand> entityRef(UUID id) {
+		return entityRef(id.toString());
+	}
+
+	private PersistentEntityRef<UserCommand> entityRef(String id) {
+		return registry.refFor(UserEntity.class, id);
+	}
+
 }
