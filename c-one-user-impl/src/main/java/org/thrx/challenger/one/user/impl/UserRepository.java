@@ -35,7 +35,7 @@ import akka.Done;
 import de.thrx.cone.common.PaginatedSequence;
 
 @Singleton
-public class UserRepository {
+public class UserRepository { 
 
     private final CassandraSession session;
 
@@ -141,15 +141,15 @@ public class UserRepository {
         	        session.executeCreateTable(
         	                "CREATE TABLE IF NOT EXISTS User ("
         	                        + "  id UUID"
-        	                        + "  username TEXT"
-        	                        + "  nickName TEXT"
-        	                        + "  givenName TEXT"
-        	                        + "  familyname TEXT"
-        	                        + "  postCode TEXT"
-        	                        + "  eMail TEXT"
-        	                        + "  mobilPhone TEXT"
-        	                        + "  street TEXT"
-        	                        + "  city TEXT"
+        	                        + ", username TEXT"
+        	                        + ", nickName TEXT"
+        	                        + ", givenName TEXT"
+        	                        + ", familyname TEXT"
+        	                        + ", postCode TEXT"
+        	                        + ", eMail TEXT"
+        	                        + ", mobilPhone TEXT"
+        	                        + ", street TEXT"
+        	                        + ", city TEXT"
         	                        + ", PRIMARY KEY(id)"
         	                        + ")"
         	        )
